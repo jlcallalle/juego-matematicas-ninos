@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reino Matemático - Juego Educativo para Niños</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Fredoka & Comic Neue -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'math-purple': '#7C3AED',
+                        'math-pink': '#EC4899',
+                        'math-yellow': '#F59E0B',
+                        'math-green': '#10B981',
+                        'math-blue': '#3B82F6',
+                        'math-orange': '#F97316',
+                    },
+                    fontFamily: {
+                        fredoka: ['Fredoka', 'sans-serif'],
+                        quicksand: ['Quicksand', 'sans-serif'],
+                    },
+                    animation: {
+                        'bounce-short': 'bounce 0.5s ease-in-out 1',
+                        'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'pop': 'pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                        'float': 'float 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        pop: {
+                            '0%': { transform: 'scale(0.8)', opacity: '0' },
+                            '100%': { transform: 'scale(1)', opacity: '1' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Fredoka', cursive, sans-serif;
+            background: linear-gradient(135deg, #6EE7B7 0%, #3B82F6 50%, #9333EA 100%);
+            min-height: 100vh;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 20px 30px rgba(0, 0, 0, 0.15), 0 0 0 4px rgba(255, 255, 255, 0.4);
+        }
+
+        .btn-game {
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 6px 0 rgba(0, 0, 0, 0.2);
+        }
+        .btn-game:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-key {
+            transition: all 0.1s ease;
+            box-shadow: 0 4px 0 #CBD5E1;
+        }
+        .btn-key:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 #CBD5E1;
+        }
+
+        .custom-shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-8px, 0, 0); }
+            40%, 60% { transform: translate3d(8px, 0, 0); }
+        }
+
+        /* Ocultar barra de scroll en contenedores móviles si fuera necesario */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center p-3 sm:p-6 min-h-screen text-slate-800">
+
+    <!-- CONTENEDOR PRINCIPAL DEL JUEGO -->
+    <div class="w-full max-w-2xl">
+
+        <!-- ================= PANTALLA 1: MENÚ INICIAL ================= -->
+        <div id="menu-screen" class="glass-card rounded-3xl p-6 sm:p-8 text-center animate-pop">
+            
+            <!-- Encabezado con Mascota -->
+            <div class="relative mb-6">
+                <div class="w-24 h-24 sm:w-28 sm:h-28 mx-auto bg-yellow-400 rounded-full flex items-center justify-center shadow-lg border-4 border-white animate-float">
+                    <span class="text-5xl sm:text-6xl">🧙‍♂️</span>
+                </div>
+                <h1 class="text-3xl sm:text-5xl font-bold text-indigo-700 mt-3 drop-shadow-sm tracking-wide">
+                    ¡Reino Matemático!
+                </h1>
+                <p class="text-slate-600 text-sm sm:text-base font-semibold mt-1">
+                    ¡Conviértete en el Mago de los Números!
+                </p>
+            </div>
+
+            <!-- Paso 1: Selección de Operación -->
+            <div class="mb-6">
+                <label class="block text-slate-700 font-bold mb-3 text-lg">1. Elige tu Desafío:</label>
+                <div class="grid grid-cols-5 gap-2 sm:gap-3">
+                    <button onclick="selectOp('add')" id="op-add" class="op-btn btn-game bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl p-3 flex flex-col items-center justify-center gap-1 border-2 border-emerald-300">
+                        <i class="fa-solid font-bold text-2xl sm:text-3xl">+</i>
+                        <span class="text-xs sm:text-sm font-bold">Suma</span>
+                    </button>
+                    <button onclick="selectOp('sub')" id="op-sub" class="op-btn btn-game bg-sky-500 hover:bg-sky-600 text-white rounded-2xl p-3 flex flex-col items-center justify-center gap-1 border-2 border-sky-300">
+                        <i class="fa-solid font-bold text-2xl sm:text-3xl">−</i>
+                        <span class="text-xs sm:text-sm font-bold">Resta</span>
+                    </button>
+                    <button onclick="selectOp('mul')" id="op-mul" class="op-btn btn-game bg-purple-500 hover:bg-purple-600 text-white rounded-2xl p-3 flex flex-col items-center justify-center gap-1 border-2 border-purple-300">
+                        <i class="fa-solid font-bold text-2xl sm:text-3xl">×</i>
+                        <span class="text-xs sm:text-sm font-bold">Multi</span>
+                    </button>
+                    <button onclick="selectOp('div')" id="op-div" class="op-btn btn-game bg-amber-500 hover:bg-amber-600 text-white rounded-2xl p-3 flex flex-col items-center justify-center gap-1 border-2 border-amber-300">
+                        <i class="fa-solid font-bold text-2xl sm:text-3xl">÷</i>
+                        <span class="text-xs sm:text-sm font-bold">División</span>
+                    </button>
+                    <button onclick="selectOp('mix')" id="op-mix" class="op-btn btn-game bg-pink-500 hover:bg-pink-600 text-white rounded-2xl p-3 flex flex-col items-center justify-center gap-1 border-2 border-pink-300">
+                        <i class="fa-solid text-xl sm:text-2xl fa-shuffle"></i>
+                        <span class="text-xs sm:text-sm font-bold">Mixto</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Paso 2: Selección de Nivel -->
+            <div class="mb-8">
+                <label class="block text-slate-700 font-bold mb-3 text-lg">2. Dificultad:</label>
+                <div class="grid grid-cols-3 gap-3">
+                    <button onclick="selectLevel('easy')" id="lvl-easy" class="lvl-btn btn-game bg-green-100 hover:bg-green-200 text-green-800 rounded-2xl py-3 px-2 border-2 border-green-400 font-bold text-sm sm:text-base">
+                        🟢 Fácil
+                    </button>
+                    <button onclick="selectLevel('medium')" id="lvl-medium" class="lvl-btn btn-game bg-yellow-100 hover:bg-yellow-200 text-yellow-800 rounded-2xl py-3 px-2 border-2 border-yellow-400 font-bold text-sm sm:text-base">
+                        🟡 Medio
+                    </button>
+                    <button onclick="selectLevel('hard')" id="lvl-hard" class="lvl-btn btn-game bg-red-100 hover:bg-red-200 text-red-800 rounded-2xl py-3 px-2 border-2 border-red-400 font-bold text-sm sm:text-base">
+                        🔴 Difícil
+                    </button>
+                </div>
+            </div>
+
+            <!-- Botón Jugar -->
+            <button onclick="startGame()" class="w-full btn-game bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600 text-slate-900 font-extrabold text-2xl py-4 rounded-2xl border-4 border-white shadow-xl transform hover:scale-105 active:scale-95 transition-all">
+                ¡EMPEZAR A JUGAR! 🚀
+            </button>
+        </div>
+
+
+        <!-- ================= PANTALLA 2: JUEGO EN CURSO ================= -->
+        <div id="game-screen" class="glass-card rounded-3xl p-4 sm:p-6 hidden">
+            
+            <!-- Barra Superior de Estado -->
+            <div class="flex items-center justify-between mb-4 bg-slate-100/80 p-3 rounded-2xl border border-slate-200">
+                <!-- Botón Volver -->
+                <button onclick="showMenu()" class="text-slate-500 hover:text-slate-800 font-bold p-2 text-sm flex items-center gap-1">
+                    <i class="fa-solid fa-arrow-left"></i> Salir
+                </button>
+
+                <!-- Puntuación & Racha -->
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-1.5 text-amber-500 font-bold text-base sm:text-lg">
+                        <i class="fa-solid fa-star text-yellow-400 text-xl"></i>
+                        <span id="score-display">0</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 text-orange-500 font-bold text-base sm:text-lg">
+                        <i class="fa-solid fa-fire text-orange-500 text-xl"></i>
+                        <span id="streak-display">0</span>
+                    </div>
+                </div>
+
+                <!-- Temporizador -->
+                <div class="flex items-center gap-2 bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-xl font-bold text-sm sm:text-base">
+                    <i class="fa-solid fa-clock"></i>
+                    <span id="timer-display">30s</span>
+                </div>
+            </div>
+
+            <!-- Indicador de Pregunta 1/10 -->
+            <div class="w-full bg-slate-200 h-3 rounded-full overflow-hidden mb-4">
+                <div id="progress-bar" class="bg-gradient-to-r from-emerald-400 to-indigo-500 h-full w-0 transition-all duration-300"></div>
+            </div>
+            
+            <div class="text-center text-xs font-bold text-slate-500 mb-2">
+                Pregunta <span id="q-count">1</span> de 10
+            </div>
+
+            <!-- TARJETA CON LA PREGUNTA MATEMÁTICA -->
+            <div id="problem-card" class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl p-6 sm:p-8 text-center text-white shadow-xl relative overflow-hidden mb-4 transition-transform">
+                
+                <!-- Feedback visual flotante -->
+                <div id="feedback-badge" class="hidden absolute inset-0 bg-emerald-500/90 backdrop-blur-sm flex flex-col items-center justify-center text-white z-10 animate-pop">
+                    <span id="feedback-icon" class="text-5xl sm:text-6xl mb-2">🎉</span>
+                    <span id="feedback-text" class="text-2xl sm:text-3xl font-extrabold drop-shadow">¡FANTÁSTICO!</span>
+                </div>
+
+                <!-- Feedback error -->
+                <div id="error-badge" class="hidden absolute inset-0 bg-red-500/90 backdrop-blur-sm flex flex-col items-center justify-center text-white z-10 animate-pop">
+                    <span class="text-4xl mb-1">😅 ¡Casi!</span>
+                    <span class="text-lg font-bold">La respuesta era: <span id="correct-answer-show" class="text-yellow-300 text-2xl font-black">12</span></span>
+                    <button onclick="nextQuestion()" class="mt-3 bg-white text-red-600 font-extrabold px-5 py-2 rounded-xl text-sm shadow">Siguiente ➡️</button>
+                </div>
+
+                <!-- Expresión matemática -->
+                <div class="flex items-center justify-center gap-3 sm:gap-4 text-4xl sm:text-6xl font-black tracking-wide">
+                    <span id="num1">0</span>
+                    <span id="operator-symbol" class="text-yellow-300">+</span>
+                    <span id="num2">0</span>
+                    <span>=</span>
+                    <!-- Input de respuesta -->
+                    <div id="user-input-box" class="min-w-[70px] sm:min-w-[100px] h-14 sm:h-20 bg-white text-indigo-900 rounded-2xl flex items-center justify-center px-3 border-4 border-yellow-300 shadow-inner font-extrabold text-3xl sm:text-5xl">
+                        <span id="user-input-text"></span>
+                        <span id="cursor" class="animate-pulse text-indigo-400">|</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TECLADO NUMÉRICO EN PANTALLA -->
+            <div class="grid grid-cols-3 gap-2 sm:gap-3 max-w-sm mx-auto mb-2">
+                <button onclick="pressNum(1)" class="btn-key bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-2xl sm:text-3xl py-3 rounded-2xl">1</button>
+                <button onclick="pressNum(2)" class="btn-key bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-2xl sm:text-3xl py-3 rounded-2xl">2</button>
+                <button onclick="pressNum(3)" class="btn-key bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-2xl sm:text-3xl py-3 rounded-2xl">3</button>
+                <button onclick="pressNum(4)" class="btn-key bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-2xl sm:text-3xl py-3 rounded-2xl">4</button>
+                <button onclick="pressNum(5)" class="btn-key bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-2xl sm:text-3xl py-3 rounded-2xl">5</button>
+                <button onclick="pressNum(6)" class="btn-key bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-2xl sm:text-3xl py-3 rounded-2xl">6</button>
+                <button onclick="pressNum(7)" class="btn-key bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-2xl sm:text-3xl py-3 rounded-2xl">7</button>
+                <button onclick="pressNum(8)" class="btn-key bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-2xl sm:text-3xl py-3 rounded-2xl">8</button>
+                <button onclick="pressNum(9)" class="btn-key bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-2xl sm:text-3xl py-3 rounded-2xl">9</button>
+                <button onclick="deleteNum()" class="btn-key bg-rose-100 hover:bg-rose-200 text-rose-600 font-bold text-xl py-3 rounded-2xl flex items-center justify-center">
+                    <i class="fa-solid fa-backspace"></i>
+                </button>
+                <button onclick="pressNum(0)" class="btn-key bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-2xl sm:text-3xl py-3 rounded-2xl">0</button>
+                <button onclick="submitAnswer()" class="btn-game bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xl py-3 rounded-2xl flex items-center justify-center border-b-4 border-emerald-700">
+                    <i class="fa-solid fa-check text-2xl"></i>
+                </button>
+            </div>
+        </div>
+
+
+        <!-- ================= PANTALLA 3: RESUMEN / RESULTADOS ================= -->
+        <div id="results-screen" class="glass-card rounded-3xl p-6 sm:p-8 text-center hidden animate-pop">
+            
+            <div class="text-6xl mb-2" id="trophy-emoji">🏆</div>
+            <h2 class="text-3xl sm:text-4xl font-extrabold text-indigo-800 mb-1">¡Ronda Terminada!</h2>
+            <p id="results-subtitle" class="text-slate-600 font-semibold mb-4">¡Has completado el desafío matemático!</p>
+
+            <!-- Estrellas Obtenidas -->
+            <div class="flex justify-center gap-2 mb-6 text-4xl sm:text-5xl" id="stars-container">
+                <i class="fa-solid fa-star text-slate-300"></i>
+                <i class="fa-solid fa-star text-slate-300"></i>
+                <i class="fa-solid fa-star text-slate-300"></i>
+            </div>
+
+            <!-- Métricas -->
+            <div class="grid grid-cols-3 gap-3 mb-6 bg-indigo-50/80 p-4 rounded-2xl border border-indigo-100">
+                <div class="flex flex-col">
+                    <span class="text-xs text-slate-500 font-bold uppercase">Puntaje</span>
+                    <span id="final-score" class="text-2xl sm:text-3xl font-black text-indigo-600">0</span>
+                </div>
+                <div class="flex flex-col border-x border-indigo-200">
+                    <span class="text-xs text-slate-500 font-bold uppercase">Precisión</span>
+                    <span id="final-accuracy" class="text-2xl sm:text-3xl font-black text-emerald-600">0%</span>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-xs text-slate-500 font-bold uppercase">Máx Racha</span>
+                    <span id="final-streak" class="text-2xl sm:text-3xl font-black text-orange-500">0</span>
+                </div>
+            </div>
+
+            <!-- Botones de Acción -->
+            <div class="flex flex-col sm:flex-row gap-3">
+                <button onclick="startGame()" class="flex-1 btn-game bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold py-3.5 px-4 rounded-2xl border-b-4 border-emerald-700 text-lg">
+                    <i class="fa-solid fa-rotate-right mr-2"></i> Jugar de Nuevo
+                </button>
+                <button onclick="showMenu()" class="flex-1 btn-game bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold py-3.5 px-4 rounded-2xl border-b-4 border-indigo-800 text-lg">
+                    <i class="fa-solid fa-bars mr-2"></i> Cambiar Nivel
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- SOUND EFFECTS USANDO WEB AUDIO API -->
+    <script>
+        // Web Audio API para efectos de sonido sin dependencias externas
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioCtx();
+            }
+        }
+
+        function playSound(type) {
+            try {
+                initAudio();
+                if (!audioCtx) return;
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'click') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.exponentialRampToValueAtTime(800, now + 0.05);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.05);
+                    osc.start(now);
+                    osc.stop(now + 0.05);
+                } else if (type === 'correct') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, now); // C5
+                    osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
+                    osc.frequency.setValueAtTime(783.99, now + 0.16); // G5
+                    osc.frequency.setValueAtTime(1046.50, now + 0.24); // C6
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
+                    osc.start(now);
+                    osc.stop(now + 0.4);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, now);
+                    osc.frequency.linearRampToValueAtTime(110, now + 0.25);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                } else if (type === 'win') {
+                    // Fanfarria simple
+                    const notes = [400, 500, 600, 800];
+                    notes.forEach((freq, idx) => {
+                        const noteOsc = audioCtx.createOscillator();
+                        const noteGain = audioCtx.createGain();
+                        noteOsc.connect(noteGain);
+                        noteGain.connect(audioCtx.destination);
+                        
+                        noteOsc.frequency.setValueAtTime(freq, now + (idx * 0.1));
+                        noteGain.gain.setValueAtTime(0.15, now + (idx * 0.1));
+                        noteGain.gain.linearRampToValueAtTime(0.01, now + (idx * 0.1) + 0.2);
+                        
+                        noteOsc.start(now + (idx * 0.1));
+                        noteOsc.stop(now + (idx * 0.1) + 0.2);
+                    });
+                }
+            } catch (e) {
+                console.log('Audio non-supported or blocked', e);
+            }
+        }
+    </script>
+
+    <!-- LÓGICA PRINCIPAL DEL JUEGO -->
+    <script>
+        // Configuración y Estado del Juego
+        let selectedOp = 'add';
+        let selectedLevel = 'easy';
+
+        let currentQuestion = 0;
+        const totalQuestions = 10;
+        let score = 0;
+        let streak = 0;
+        let maxStreak = 0;
+        let correctCount = 0;
+
+        let num1 = 0;
+        let num2 = 0;
+        let currentOperator = '+';
+        let correctAnswer = 0;
+        let userInput = '';
+
+        let timerSeconds = 30;
+        let timerInterval = null;
+        let isAnswerLocked = false;
+
+        const praisePhrases = [
+            "¡FANTÁSTICO!", "¡INCREÍBLE!", "¡EXCELENTE!", 
+            "¡GENIAL!", "¡SÚPER BIEN!", "¡ERES UN MAGO!"
+        ];
+
+        // Inicialización
+        window.onload = function() {
+            selectOp('add');
+            selectLevel('easy');
+            setupKeyboardListener();
+        };
+
+        // Selección de Operación
+        function selectOp(op) {
+            playSound('click');
+            selectedOp = op;
+            document.querySelectorAll('.op-btn').forEach(btn => {
+                btn.classList.remove('ring-4', 'ring-yellow-400', 'scale-105');
+            });
+            const selectedBtn = document.getElementById(`op-${op}`);
+            selectedBtn.classList.add('ring-4', 'ring-yellow-400', 'scale-105');
+        }
+
+        // Selección de Nivel
+        function selectLevel(lvl) {
+            playSound('click');
+            selectedLevel = lvl;
+            document.querySelectorAll('.lvl-btn').forEach(btn => {
+                btn.classList.remove('ring-4', 'ring-indigo-500', 'scale-105');
+            });
+            const selectedBtn = document.getElementById(`lvl-${lvl}`);
+            selectedBtn.classList.add('ring-4', 'ring-indigo-500', 'scale-105');
+        }
+
+        // Cambiar entre Pantallas
+        function showMenu() {
+            playSound('click');
+            clearInterval(timerInterval);
+            document.getElementById('menu-screen').classList.remove('hidden');
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('results-screen').classList.add('hidden');
+        }
+
+        function startGame() {
+            playSound('click');
+            currentQuestion = 0;
+            score = 0;
+            streak = 0;
+            maxStreak = 0;
+            correctCount = 0;
+
+            document.getElementById('menu-screen').classList.add('hidden');
+            document.getElementById('results-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+
+            updateStatsDisplay();
+            nextQuestion();
+        }
+
+        // Generador de Preguntas
+        function nextQuestion() {
+            if (currentQuestion >= totalQuestions) {
+                endGame();
+                return;
+            }
+
+            currentQuestion++;
+            userInput = '';
+            isAnswerLocked = false;
+            updateInputDisplay();
+
+            // Ocultar badges de feedback
+            document.getElementById('feedback-badge').classList.add('hidden');
+            document.getElementById('error-badge').classList.add('hidden');
+
+            // Actualizar barra de progreso
+            document.getElementById('q-count').innerText = currentQuestion;
+            const progressPercent = ((currentQuestion - 1) / totalQuestions) * 100;
+            document.getElementById('progress-bar').style.width = `${progressPercent}%`;
+
+            // Determinar operador activo (si es mixto, elige uno al azar)
+            let op = selectedOp;
+            if (op === 'mix') {
+                const ops = ['add', 'sub', 'mul', 'div'];
+                op = ops[Math.floor(Math.random() * ops.length)];
+            }
+
+            // Generar números según nivel y operación
+            generateNumbers(op, selectedLevel);
+
+            // Reiniciar temporizador por pregunta
+            resetTimer();
+        }
+
+        function generateNumbers(op, level) {
+            let maxNum, minNum;
+
+            if (level === 'easy') {
+                maxNum = (op === 'mul' || op === 'div') ? 5 : 15;
+                minNum = 1;
+            } else if (level === 'medium') {
+                maxNum = (op === 'mul' || op === 'div') ? 10 : 50;
+                minNum = 2;
+            } else { // Hard
+                maxNum = (op === 'mul' || op === 'div') ? 12 : 100;
+                minNum = 5;
+            }
+
+            if (op === 'add') {
+                num1 = Math.floor(Math.random() * maxNum) + minNum;
+                num2 = Math.floor(Math.random() * maxNum) + minNum;
+                currentOperator = '+';
+                correctAnswer = num1 + num2;
+            } 
+            else if (op === 'sub') {
+                num1 = Math.floor(Math.random() * maxNum) + minNum;
+                num2 = Math.floor(Math.random() * num1) + 1; // Para evitar números negativos
+                currentOperator = '−';
+                correctAnswer = num1 - num2;
+            } 
+            else if (op === 'mul') {
+                num1 = Math.floor(Math.random() * maxNum) + minNum;
+                num2 = Math.floor(Math.random() * (level === 'easy' ? 5 : 10)) + 1;
+                currentOperator = '×';
+                correctAnswer = num1 * num2;
+            } 
+            else if (op === 'div') {
+                // Generar división exacta
+                num2 = Math.floor(Math.random() * (level === 'easy' ? 5 : 10)) + 1;
+                correctAnswer = Math.floor(Math.random() * maxNum) + 1;
+                num1 = num2 * correctAnswer; // Asegura división entera
+                currentOperator = '÷';
+            }
+
+            // Renderizar en UI
+            document.getElementById('num1').innerText = num1;
+            document.getElementById('num2').innerText = num2;
+            document.getElementById('operator-symbol').innerText = currentOperator;
+        }
+
+        // Temporizador por Pregunta
+        function resetTimer() {
+            clearInterval(timerInterval);
+            timerSeconds = selectedLevel === 'easy' ? 30 : (selectedLevel === 'medium' ? 20 : 15);
+            document.getElementById('timer-display').innerText = `${timerSeconds}s`;
+
+            timerInterval = setInterval(() => {
+                timerSeconds--;
+                document.getElementById('timer-display').innerText = `${timerSeconds}s`;
+
+                if (timerSeconds <= 0) {
+                    clearInterval(timerInterval);
+                    handleTimeOut();
+                }
+            }, 1000);
+        }
+
+        function handleTimeOut() {
+            if (isAnswerLocked) return;
+            isAnswerLocked = true;
+            playSound('wrong');
+            
+            streak = 0;
+            updateStatsDisplay();
+
+            document.getElementById('correct-answer-show').innerText = correctAnswer;
+            document.getElementById('error-badge').classList.remove('hidden');
+        }
+
+        // Control del Teclado Numérico
+        function pressNum(num) {
+            if (isAnswerLocked) return;
+            playSound('click');
+            if (userInput.length < 4) { // Límite de dígitos
+                userInput += num;
+                updateInputDisplay();
+            }
+        }
+
+        function deleteNum() {
+            if (isAnswerLocked) return;
+            playSound('click');
+            userInput = userInput.slice(0, -1);
+            updateInputDisplay();
+        }
+
+        function updateInputDisplay() {
+            const inputEl = document.getElementById('user-input-text');
+            const cursorEl = document.getElementById('cursor');
+
+            inputEl.innerText = userInput;
+            if (userInput.length > 0) {
+                cursorEl.classList.add('hidden');
+            } else {
+                cursorEl.classList.remove('hidden');
+            }
+        }
+
+        // Soporte Teclado Físico
+        function setupKeyboardListener() {
+            window.addEventListener('keydown', (e) => {
+                const gameScreen = document.getElementById('game-screen');
+                if (gameScreen.classList.contains('hidden')) return;
+
+                if (e.key >= '0' && e.key <= '9') {
+                    pressNum(parseInt(e.key));
+                } else if (e.key === 'Backspace') {
+                    deleteNum();
+                } else if (e.key === 'Enter') {
+                    submitAnswer();
+                }
+            });
+        }
+
+        // Validación de Respuesta
+        function submitAnswer() {
+            if (isAnswerLocked || userInput === '') return;
+            isAnswerLocked = true;
+            clearInterval(timerInterval);
+
+            const val = parseInt(userInput);
+
+            if (val === correctAnswer) {
+                // RESPUESTA CORRECTA
+                playSound('correct');
+                correctCount++;
+                streak++;
+                if (streak > maxStreak) maxStreak = streak;
+
+                // Cálculo de puntos con bonus por racha
+                const points = 100 + (streak * 20);
+                score += points;
+
+                // Animación de Confeti ligero
+                confetti({
+                    particleCount: 40,
+                    spread: 60,
+                    origin: { y: 0.7 }
+                });
+
+                // Mostrar badge de éxito
+                const randomPraise = praisePhrases[Math.floor(Math.random() * praisePhrases.length)];
+                document.getElementById('feedback-text').innerText = randomPraise;
+                document.getElementById('feedback-badge').classList.remove('hidden');
+
+                updateStatsDisplay();
+
+                setTimeout(() => {
+                    nextQuestion();
+                }, 1200);
+
+            } else {
+                // RESPUESTA INCORRECTA
+                playSound('wrong');
+                streak = 0;
+                updateStatsDisplay();
+
+                // Animación de Shake en el contenedor de la pregunta
+                const card = document.getElementById('problem-card');
+                card.classList.add('custom-shake');
+                setTimeout(() => card.classList.remove('custom-shake'), 500);
+
+                document.getElementById('correct-answer-show').innerText = correctAnswer;
+                document.getElementById('error-badge').classList.remove('hidden');
+            }
+        }
+
+        function updateStatsDisplay() {
+            document.getElementById('score-display').innerText = score;
+            document.getElementById('streak-display').innerText = streak;
+        }
+
+        // Pantalla de Resultados Finales
+        function endGame() {
+            clearInterval(timerInterval);
+            playSound('win');
+
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('results-screen').classList.remove('hidden');
+
+            const accuracy = Math.round((correctCount / totalQuestions) * 100);
+
+            document.getElementById('final-score').innerText = score;
+            document.getElementById('final-accuracy').innerText = `${accuracy}%`;
+            document.getElementById('final-streak').innerText = maxStreak;
+
+            // Calcular Estrellas y Trofeo
+            let starsHTML = '';
+            let emoji = '🏆';
+            let subtitle = '';
+
+            if (accuracy >= 90) {
+                starsHTML = `
+                    <i class="fa-solid fa-star text-yellow-400 animate-bounce"></i>
+                    <i class="fa-solid fa-star text-yellow-400 animate-bounce" style="animation-delay: 0.1s"></i>
+                    <i class="fa-solid fa-star text-yellow-400 animate-bounce" style="animation-delay: 0.2s"></i>
+                `;
+                emoji = '👑';
+                subtitle = '¡Puntaje Perfecto! Eres el Mago Supremo de las Matemáticas.';
+            } else if (accuracy >= 60) {
+                starsHTML = `
+                    <i class="fa-solid fa-star text-yellow-400"></i>
+                    <i class="fa-solid fa-star text-yellow-400"></i>
+                    <i class="fa-solid fa-star text-slate-300"></i>
+                `;
+                emoji = '🌟';
+                subtitle = '¡Gran trabajo! Estás muy cerca de dominar este nivel.';
+            } else {
+                starsHTML = `
+                    <i class="fa-solid fa-star text-yellow-400"></i>
+                    <i class="fa-solid fa-star text-slate-300"></i>
+                    <i class="fa-solid fa-star text-slate-300"></i>
+                `;
+                emoji = '👍';
+                subtitle = '¡Buen intento! Sigue practicando para ganar más estrellas.';
+            }
+
+            document.getElementById('stars-container').innerHTML = starsHTML;
+            document.getElementById('trophy-emoji').innerText = emoji;
+            document.getElementById('results-subtitle').innerText = subtitle;
+
+            // Lluvia final de confeti si la racha fue buena
+            if (accuracy >= 70) {
+                confetti({
+                    particleCount: 100,
+                    spread: 80,
+                    origin: { y: 0.6 }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
